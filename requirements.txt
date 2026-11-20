@@ -2,6 +2,7 @@ yfinance
 pandas
 numpy
 matplotlib
+psycopg2-binary
 scipy
 streamlit
-plotly
+python-dotenv

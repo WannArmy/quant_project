@@ -18,6 +18,11 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 
+# Load environment variables from .env (for DATABASE_URL)
+from dotenv import load_dotenv
+load_dotenv()
+
+
 # Custom data-processing functions in the src/ folder
 from src.fetch_data import get_price_data          # fetch historical prices for one ticker
 from src.preprocess import calculate_returns       # prices → daily returns
@@ -146,7 +151,7 @@ header[data-testid="stHeader"] {{ display: none; }}
 
 /* ---------- Panel / Section ---------- */
 .panel {{
-    background: #FFFFFF;
+    background: #0F172A; color: #FFFFFF;
     border: 1px solid {BORDER};
     border-radius: 16px;
     padding: 6px 4px;
@@ -192,7 +197,7 @@ header[data-testid="stHeader"] {{ display: none; }}
 
 /* ---------- KPI cards (4 metric cards) ---------- */
 .kpi {{
-    background: #FFFFFF;
+    background: #0F172A; color: #FFFFFF;
     border: 1px solid {BORDER};
     border-radius: 14px;
     padding: 18px 20px;
@@ -217,7 +222,7 @@ header[data-testid="stHeader"] {{ display: none; }}
 .kpi-value {{
     font-size: 26px;
     font-weight: 750;
-    color: {TEXT};
+    color: #FFFFFF;
 }}
 .kpi-desc {{
     color: {SUBTLE};
@@ -237,7 +242,7 @@ header[data-testid="stHeader"] {{ display: none; }}
 .score-pill-num {{
     font-size: 30px;
     font-weight: 800;
-    color: var(--fg);
+    color: #FFFFFF;
 }}
 .score-pill-label {{
     font-size: 13px;
@@ -248,7 +253,7 @@ header[data-testid="stHeader"] {{ display: none; }}
 /* ---------- Stock detail card (single-stock card) ---------- */
 /* Left: code + name + badge | Right: score + progress bar */
 .stock-card {{
-    background: #FFFFFF;
+    background: #0F172A; color: #FFFFFF;
     border: 1px solid {BORDER};
     border-radius: 16px;
     padding: 22px 26px;
@@ -294,7 +299,7 @@ header[data-testid="stHeader"] {{ display: none; }}
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    background: #FFFFFF;
+    background: #0F172A; color: #FFFFFF;
     border: 1px solid {BORDER};
     border-radius: 12px;
     padding: 12px 14px;
@@ -369,7 +374,7 @@ div.stButton > button[kind="primary"]:focus {{
 }}
 /* Expander box (collapsible section) */
 div[data-testid="stExpander"] {{
-    background: #FFFFFF;
+    background: #0F172A; color: #FFFFFF;
     border: 1px solid {BORDER};
     border-radius: 12px;
 }}
@@ -404,7 +409,7 @@ div[data-testid="stExpander"] summary:hover {{
 /* Select boxes (selectbox/multiselect) and number inputs */
 div[data-baseweb="select"] > div,
 div[data-baseweb="input"] > div {{
-    background: #FFFFFF;
+    background: #0F172A; color: #FFFFFF;
     border-color: #CBD5E1;
 }}
 /* Text inside number inputs (e.g. 10000) — force a dark color so it never fades */
