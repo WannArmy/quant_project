@@ -14,8 +14,23 @@
 # =========================================================
 
 import streamlit as st
+# Load custom CSS from external file
+def load_css(file_name: str):
+    """Inject a CSS file into the Streamlit app.
+    The file should be located in the project root (same folder as app.py).
+    """
+    import pathlib, streamlit as st
+    css_path = pathlib.Path(__file__).parent / file_name
+    if css_path.is_file():
+        css = css_path.read_text(encoding="utf-8")
+        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+    else:
+        st.warning(f"CSS file '{file_name}' not found.")
 import pandas as pd
 import numpy as np
+
+# Load external CSS
+load_css("style.css")
 import plotly.graph_objects as go
 
 # Load environment variables from .env (for DATABASE_URL)
@@ -548,6 +563,9 @@ def section_header(num: str, title: str, subtitle: str = ""):
         + (f'<div class="section-subtitle">{subtitle}</div>' if subtitle else "")
     )
 
+# Load external CSS
+load_css("style.css")
+
 
 def kpi_card(label: str, value: str, desc: str, accent: str = PRIMARY):
     """
@@ -562,6 +580,9 @@ def kpi_card(label: str, value: str, desc: str, accent: str = PRIMARY):
         f"</div>"
     )
 
+# Load external CSS
+load_css("style.css")
+
 
 def score_pill(count: int, key: str):
     """
@@ -575,6 +596,9 @@ def score_pill(count: int, key: str):
         f'<div class="score-pill-label">{label}</div>'
         f"</div>"
     )
+
+# Load external CSS
+load_css("style.css")
 
 
 def base_layout(fig, height=420, y_prefix=None, y_format=None):
@@ -598,7 +622,10 @@ def base_layout(fig, height=420, y_prefix=None, y_format=None):
             linecolor="#CBD5E1",
             tickfont=dict(color=TEXT, size=13),
             title_font=dict(color=TEXT),
-        ),
+        )
+
+# Load external CSS
+load_css("style.css"),
         yaxis=dict(
             tickfont=dict(color=TEXT, size=13),
             title_font=dict(color=TEXT),
@@ -607,8 +634,14 @@ def base_layout(fig, height=420, y_prefix=None, y_format=None):
             zeroline=False,
             tickprefix=y_prefix,
             tickformat=y_format,
-        ),
+        )
+
+# Load external CSS
+load_css("style.css"),
     )
+
+# Load external CSS
+load_css("style.css")
     return fig
 
 
@@ -657,7 +690,10 @@ CRITERIA_GROUPS = [
             ("Delta_ROA", "資產報酬率改善", "本期 ROA 高於前一期。"),
             ("Accrual", "盈餘品質", "營業現金流相對於資產的表現優於 ROA。"),
         ],
-    ),
+    )
+
+# Load external CSS
+load_css("style.css"),
     (
         "財務結構與流動性",  # Leverage, liquidity and source of funds (3 criteria)
         [
@@ -665,14 +701,20 @@ CRITERIA_GROUPS = [
             ("Liquidity", "流動性改善", "公司的流動比率較前一期提高。"),
             ("Shares", "未發行新股", "公司普通股股數沒有增加。"),
         ],
-    ),
+    )
+
+# Load external CSS
+load_css("style.css"),
     (
         "營運效率",  # Operating efficiency (2 criteria)
         [
             ("Gross_Margin", "毛利率改善", "本期毛利率高於前一期。"),
             ("Asset_Turnover", "資產週轉率改善", "公司利用資產創造營收的效率提高。"),
         ],
-    ),
+    )
+
+# Load external CSS
+load_css("style.css"),
 ]
 
 
@@ -725,6 +767,9 @@ with st.container(border=True):
         "選擇您想分析的台灣股票，並設定投資金額與配置比例。",
     )
 
+# Load external CSS
+load_css("style.css")
+
     # Wide left column (stock picker), narrow right column (capital) — ratio 2.4 : 1
     config_col1, config_col2 = st.columns([2.4, 1], gap="large")
 
@@ -739,6 +784,9 @@ with st.container(border=True):
             placeholder="請選擇股票",   # gray hint shown when no stock is selected
         )
 
+# Load external CSS
+load_css("style.css")
+
     with config_col2:
         # Initial capital (NT$), minimum 1,000, step of 1,000
         initial_investment = st.number_input(
@@ -748,6 +796,9 @@ with st.container(border=True):
             step=1000.0,
             format="%.0f",   # show an integer, no .00
         )
+
+# Load external CSS
+load_css("style.css")
 
     # Defaults in case no stock is selected
     weights = {}
@@ -774,6 +825,9 @@ with st.container(border=True):
                         key=f"weight_{ticker}",   # unique key so Streamlit remembers each input
                     )
 
+# Load external CSS
+load_css("style.css")
+
             # Show the total weight: green if = 100%, orange otherwise
             total_weight = sum(weights.values())
             w_col1, w_col2 = st.columns([1, 1])
@@ -786,6 +840,9 @@ with st.container(border=True):
                     f'<div style="text-align:right;color:{MUTED};font-size:14px;">'
                     f'目前總權重：<b style="color:{color};">{total_weight:.1%}</b></div>'
                 )
+
+# Load external CSS
+load_css("style.css")
 
     # Run button (takes 1/4 of the width).
     # st.button returns True only once, on the rerun right after the click.
@@ -833,6 +890,9 @@ if run_analysis:
                 text=f"正在取得 {STOCK_NAMES[ticker]} 資料……",
             )
 
+# Load external CSS
+load_css("style.css")
+
         progress.empty()   # remove the progress bar when done
 
         if not returns_dict:
@@ -851,6 +911,9 @@ if run_analysis:
             weight_series = (
                 pd.Series(weights).reindex(returns_df.columns).fillna(0)
             )
+
+# Load external CSS
+load_css("style.css")
 
             # ----- Risk metrics -----
             portfolio_returns = calculate_portfolio_returns(returns_df, weight_series)
@@ -879,6 +942,9 @@ if run_analysis:
                 f_score_df=f_score_df,
             )
 
+# Load external CSS
+load_css("style.css")
+
             st.toast("分析完成！", icon="✅")   # small notification in the corner
 
 
@@ -895,6 +961,9 @@ if not st.session_state.analysis_done:
         f'<div style="font-size:40px;">📊</div>'
         f"<div>設定完成後，點擊「開始分析」即可查看結果</div></div>"
     )
+
+# Load external CSS
+load_css("style.css")
 
 else:
 
@@ -925,6 +994,9 @@ else:
             "透過歷史資料評估投資組合的波動程度與潛在下跌幅度。",
         )
 
+# Load external CSS
+load_css("style.css")
+
         # ----- 4 KPI cards -----
         k1, k2, k3, k4 = st.columns(4)
         with k1:
@@ -934,6 +1006,9 @@ else:
                 "歷史績效分析的起始金額",
                 MUTED,
             )
+
+# Load external CSS
+load_css("style.css")
         with k2:
             # Bar color: green if profit, red if loss
             kpi_card(
@@ -942,6 +1017,9 @@ else:
                 f"累積報酬 {total_return:+.2%}",   # :+.2% → +12.34% (always signed)
                 SUCCESS if total_return >= 0 else DANGER,
             )
+
+# Load external CSS
+load_css("style.css")
         with k3:
             kpi_card(
                 "年化波動率",
@@ -949,6 +1027,9 @@ else:
                 "衡量投資報酬的波動程度",
                 PRIMARY,
             )
+
+# Load external CSS
+load_css("style.css")
         with k4:
             kpi_card(
                 "最大回撤",
@@ -956,6 +1037,9 @@ else:
                 "歷史高點至低點的最大跌幅",
                 DANGER,
             )
+
+# Load external CSS
+load_css("style.css")
 
         # Explanation of the two risk metrics
         with st.expander("📖 了解風險指標"):
@@ -966,6 +1050,9 @@ else:
 **最大回撤**：衡量投資組合從歷史高點下降至最低點的最大幅度，可了解過去曾經歷的最大下跌程度。
 """
             )
+
+# Load external CSS
+load_css("style.css")
 
         # ---------- Equity curve (portfolio value over time) ----------
         html('<div class="sub-title">歷史投資組合價值</div>')
@@ -981,7 +1068,13 @@ else:
                 fillcolor="rgba(37, 99, 235, 0.08)",
                 hovertemplate="投資組合價值：NT$ %{y:,.0f}<extra></extra>",
             )
+
+# Load external CSS
+load_css("style.css")
         )
+
+# Load external CSS
+load_css("style.css")
         # Dotted horizontal line = initial capital, to eyeball profit/loss
         fig.add_hline(
             y=initial_investment,
@@ -990,6 +1083,9 @@ else:
             annotation_text="初始金額",
             annotation_font_color=MUTED,
         )
+
+# Load external CSS
+load_css("style.css")
         base_layout(fig, height=420, y_prefix="NT$ ")
         # Tighten the y range around the data (otherwise fill="tozeroy" pulls
         # the axis down to 0 and flattens the curve)
@@ -1013,7 +1109,13 @@ else:
                     fillcolor="rgba(220, 38, 38, 0.12)",
                     hovertemplate="回撤：%{y:.2%}<extra></extra>",
                 )
+
+# Load external CSS
+load_css("style.css")
             )
+
+# Load external CSS
+load_css("style.css")
             base_layout(dd_fig, height=300, y_format=".0%")   # y axis as percentage
             st.plotly_chart(dd_fig, use_container_width=True)
 
@@ -1033,7 +1135,13 @@ else:
                     textfont=dict(color="#FFFFFF", size=13),
                     hovertemplate="%{label}<br>%{percent}<extra></extra>",
                 )
+
+# Load external CSS
+load_css("style.css")
             )
+
+# Load external CSS
+load_css("style.css")
             pie.update_layout(
                 height=300,
                 margin=dict(l=0, r=0, t=0, b=0),
@@ -1047,8 +1155,14 @@ else:
                         font=dict(size=18, color=TEXT),
                         showarrow=False,
                     )
+
+# Load external CSS
+load_css("style.css")
                 ],
             )
+
+# Load external CSS
+load_css("style.css")
             st.plotly_chart(pie, use_container_width=True)
 
         # ----- Allocation detail table -----
@@ -1065,6 +1179,9 @@ else:
                     ],
                 }
             )
+
+# Load external CSS
+load_css("style.css")
             st.dataframe(
                 composition_df,
                 use_container_width=True,
@@ -1073,10 +1190,16 @@ else:
                     # Weight column shown as a 0–100% progress bar
                     "投資權重": st.column_config.ProgressColumn(
                         "投資權重", format="%.1f%%", min_value=0, max_value=100
-                    ),
+                    )
+
+# Load external CSS
+load_css("style.css"),
                     "投入金額 (NT$)": st.column_config.NumberColumn(format="%,.0f"),
                 },
             )
+
+# Load external CSS
+load_css("style.css")
 
     # =====================================================
     # TAB 2 — F-SCORE
@@ -1090,6 +1213,9 @@ else:
             "透過 9 項財務指標評估企業的財務狀況與營運改善程度。",
         )
 
+# Load external CSS
+load_css("style.css")
+
         # Explanation of the F-Score and its scale
         with st.expander("什麼是 Piotroski F-Score？"):
             st.markdown(
@@ -1100,6 +1226,9 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
 **8–9 分：強**　·　**6–7 分：良好**　·　**4–5 分：中等**　·　**0–3 分：弱**
 """
             )
+
+# Load external CSS
+load_css("style.css")
 
         f_score_df = ss.get("f_score_df")   # .get() → None if the key doesn't exist
 
@@ -1144,7 +1273,13 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
                         textfont=dict(color=TEXT, size=13),
                         hovertemplate="%{y}<br>F-Score：%{x} / 9<extra></extra>",
                     )
+
+# Load external CSS
+load_css("style.css")
                 )
+
+# Load external CSS
+load_css("style.css")
                 # Height grows with the number of tickers (46px each), min 260px
                 base_layout(bar, height=max(260, 46 * len(ranked)))
                 bar.update_layout(hovermode="closest")
@@ -1162,14 +1297,23 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
                         "股票代號": table_df["Stock"],
                         "公司": table_df["Stock"].map(
                             lambda x: F_SCORE_NAMES.get(x, x)
-                        ),
+                        )
+
+# Load external CSS
+load_css("style.css"),
                         "F-Score": table_df["F_Score"],
                         # "Strong" → "強" ([0] = Chinese label)
                         "財務強度": table_df["Financial_Strength"].map(
                             lambda s: STRENGTH_STYLE.get(s, (s,))[0]
-                        ),
+                        )
+
+# Load external CSS
+load_css("style.css"),
                     }
                 )
+
+# Load external CSS
+load_css("style.css")
                 st.dataframe(
                     display_df,
                     use_container_width=True,
@@ -1178,9 +1322,15 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
                         # Score column shown as a 0–9 progress bar
                         "F-Score": st.column_config.ProgressColumn(
                             "F-Score", format="%d / 9", min_value=0, max_value=9
-                        ),
+                        )
+
+# Load external CSS
+load_css("style.css"),
                     },
                 )
+
+# Load external CSS
+load_css("style.css")
 
             # ---------- Detail (9 criteria for one ticker) ----------
             html('<div class="sub-title">詳細財務指標</div>')
@@ -1195,6 +1345,9 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
                 placeholder="請選擇股票",
             )
 
+# Load external CSS
+load_css("style.css")
+
             if selected_code is None:
                 # Nothing selected yet → show a hint instead of the detail cards
                 html(
@@ -1202,6 +1355,9 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
                     f'border:1px dashed #CBD5E1;border-radius:12px;background:#FFFFFF;">'
                     f"請從上方選擇一檔股票，查看 9 項財務指標</div>"
                 )
+
+# Load external CSS
+load_css("style.css")
 
             else:
                 # Row for the selected ticker
@@ -1211,6 +1367,9 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
                 label, fg, bg = STRENGTH_STYLE.get(
                     row["Financial_Strength"], (row["Financial_Strength"], MUTED, "#F1F5F9")
                 )
+
+# Load external CSS
+load_css("style.css")
 
                 # Overview card: code, name, strength badge | score, progress bar
                 html(
@@ -1227,6 +1386,9 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
                     f"</div>"
                     f"</div>"
                 )
+
+# Load external CSS
+load_css("style.css")
 
                 # 3 columns, one per criteria group
                 group_cols = st.columns(3, gap="medium")
@@ -1250,6 +1412,9 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
                                 f'<div class="crit-desc">{desc}</div>'
                                 f"</div></div>"
                             )
+
+# Load external CSS
+load_css("style.css")
 
 
 # =========================================================
