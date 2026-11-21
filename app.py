@@ -264,7 +264,7 @@ header[data-testid="stHeader"] {{ display: none; }}
     gap: 16px;
     margin: 10px 0 16px 0;
 }}
-.stock-code {{ color: {MUTED}; font-size: 13px; }}
+.stock-code {{ color: #FFFFFF; font-size: 13px; }}
 .stock-name {{ font-size: 22px; font-weight: 700; color: {TEXT}; }}
 .stock-score {{ font-size: 40px; font-weight: 800; color: {TEXT}; line-height: 1; }}
 .stock-score span {{ font-size: 18px; color: {MUTED}; font-weight: 500; }}  /* the " / 9" part */

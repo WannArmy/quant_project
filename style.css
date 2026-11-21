@@ -1,0 +1,72 @@
+/* style.css – Custom Streamlit dark theme overrides */
+
+/* Global background and text */
+body {
+    background-color: #0e1117 !important;
+    color: #ffffff !important;
+}
+
+/* KPI cards – dark background, white numbers */
+.stMetric {
+    background-color: #1e2128 !important;
+    color: #ffffff !important;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+/* Ensure metric values (numbers) are white */
+.stMetricValue {
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+/* Number input widget */
+.stNumberInput input {
+    color: #ffffff !important;
+    background-color: #2a2e36 !important;
+}
+
+/* Slider widget */
+.stSlider input {
+    color: #ffffff !important;
+}
+
+/* Text input */
+.stTextInput input {
+    color: #ffffff !important;
+    background-color: #2a2e36 !important;
+}
+
+/* Selectbox */
+.stSelectbox select {
+    color: #ffffff !important;
+    background-color: #2a2e36 !important;
+}
+
+/* Dataframe / table */
+.stDataFrame, .stDataTable {
+    background-color: #1e2128 !important;
+    color: #ffffff !important;
+}
+
+/* Chart titles and axis labels */
+[data-testid="stChart"] .st-mp-title,
+[data-testid="stChart"] .st-mp-axis {
+    fill: #ffffff !important;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background-color: #1e2128 !important;
+    color: #ffffff !important;
+}
+
+/* General link color */
+a {
+    color: #61dafb !important;
+}
+
+/* Ensure any new Streamlit components inherit white text */
+* {
+    color: inherit;
+}
