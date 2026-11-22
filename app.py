@@ -1,36 +1,6 @@
-# =========================================================
-# 台灣量化投資分析系統 — Streamlit app
-# ---------------------------------------------------------
-# Overall flow:
-#   1. User picks stocks, enters initial capital, adjusts weights
-#   2. Click 「開始分析」 → fetch prices → compute portfolio returns,
-#      volatility, drawdown, F-Score → store everything in session_state
-#   3. The display section reads from session_state and renders 2 result tabs
-#
-# Note on Streamlit: EVERY user interaction (changing a selectbox,
-# typing a number, clicking a button…) reruns the WHOLE script from
-# top to bottom. That is why results must be stored in
-# st.session_state, otherwise they are lost on the next rerun.
-# =========================================================
-
 import streamlit as st
-# Load custom CSS from external file
-def load_css(file_name: str):
-    """Inject a CSS file into the Streamlit app.
-    The file should be located in the project root (same folder as app.py).
-    """
-    import pathlib, streamlit as st
-    css_path = pathlib.Path(__file__).parent / file_name
-    if css_path.is_file():
-        css = css_path.read_text(encoding="utf-8")
-        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
-    else:
-        st.warning(f"CSS file '{file_name}' not found.")
 import pandas as pd
 import numpy as np
-
-# Load external CSS
-load_css("style.css")
 import plotly.graph_objects as go
 
 # Load environment variables from .env (for DATABASE_URL)
@@ -63,11 +33,6 @@ st.set_page_config(
 )
 
 
-# =========================================================
-# THEME — shared color palette
-# Colors live in variables so changing one place updates the whole app.
-# They are injected into the CSS (f-string) and into the Plotly charts.
-# =========================================================
 
 PRIMARY = "#2563EB"       # main blue (tabs, equity curve line…)
 PRIMARY_SOFT = "#EFF6FF"  # light blue background
@@ -90,463 +55,13 @@ STRENGTH_STYLE = {
     "Weak": ("弱", DANGER, DANGER_SOFT),
 }
 
-
-# =========================================================
-# CUSTOM CSS
-# Injected into the page via st.markdown(..., unsafe_allow_html=True).
-# Since this is an f-string, CSS braces must be doubled {{ }},
-# while {TEXT}, {PRIMARY}… are Python variables substituted in.
-# =========================================================
-
 st.markdown(
     f"""
-<style>
-/* ---------- Base ---------- */
-/* Hide Streamlit's default header (Deploy button, ⋮ menu) */
-header[data-testid="stHeader"] {{ display: none; }}
-
-/* Page background and default text color */
-.stApp {{
-    background: #F8FAFC;
-    color: {TEXT};
-}}
-
-/* Main content container: limit width, add top/bottom spacing */
-.main .block-container,
-[data-testid="stMainBlockContainer"] {{
-    max-width: 1280px;
-    padding-top: 1.5rem;
-    padding-bottom: 4rem;
-}}
-
-/* ---------- Hero (top banner) ---------- */
-.hero {{
-    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 55%, #3B82F6 100%);
-    border-radius: 20px;
-    padding: 40px 44px;
-    color: #FFFFFF;
-    margin-bottom: 28px;
-    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
-}}
-/* Small rounded label "TAIWAN QUANT ANALYTICS" */
-.hero-badge {{
-    display: inline-block;
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 999px;
-    padding: 4px 12px;
-    font-size: 12px;
-    letter-spacing: 0.5px;
-    margin-bottom: 14px;
-}}
-.hero-title {{
-    font-size: 40px;
-    font-weight: 800;
-    line-height: 1.2;
-    margin: 0 0 8px 0;
-}}
-.hero-subtitle {{
-    font-size: 16px;
-    opacity: 0.85;
-    margin-bottom: 22px;
-}}
-/* 4 guide steps laid out horizontally, wrapping on narrow screens */
-.hero-steps {{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}}
-.hero-step {{
-    background: rgba(255,255,255,0.12);
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 13px;
-}}
-.hero-step b {{ margin-right: 6px; }}
-
-/* ---------- Panel / Section ---------- */
-.panel {{
-    background: #0F172A; color: #FFFFFF;
-    border: 1px solid {BORDER};
-    border-radius: 16px;
-    padding: 6px 4px;
-}}
-/* Section heading: number box + title on the same row */
-.section-head {{
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 8px 0 4px 0;
-}}
-/* Square box holding the section number (1, 2, 3) */
-.section-num {{
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: {PRIMARY_SOFT};
-    color: {PRIMARY};
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-}}
-.section-title {{
-    font-size: 22px;
-    font-weight: 700;
-    color: {TEXT};
-}}
-/* margin-left 44px = 32px number box + 12px gap → aligned with the title */
-.section-subtitle {{
-    color: {MUTED};
-    font-size: 14px;
-    margin: 0 0 18px 44px;
-}}
-/* Small heading inside a section (歷史投資組合價值, 回撤走勢…) */
-.sub-title {{
-    font-size: 17px;
-    font-weight: 650;
-    color: {TEXT};
-    margin: 22px 0 10px 0;
-}}
-
-/* ---------- KPI cards (4 metric cards) ---------- */
-.kpi {{
-    background: #0F172A; color: #FFFFFF;
-    border: 1px solid {BORDER};
-    border-radius: 14px;
-    padding: 18px 20px;
-    min-height: 120px;
-    position: relative;   /* so ::before is positioned relative to the card */
-    overflow: hidden;
-}}
-/* Vertical color bar on the left; color comes from the CSS variable
-   --accent passed via style="--accent:..." in kpi_card() */
-.kpi::before {{
-    content: "";
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 4px;
-    background: var(--accent);
-}}
-.kpi-label {{
-    color: {MUTED};
-    font-size: 13px;
-    margin-bottom: 8px;
-}}
-.kpi-value {{
-    font-size: 26px;
-    font-weight: 750;
-    color: #FFFFFF;
-}}
-.kpi-desc {{
-    color: {SUBTLE};
-    font-size: 12px;
-    margin-top: 6px;
-}}
-
-/* ---------- Score summary (count cards 強/良好/中等/弱) ---------- */
-/* --fg, --bg, --border are passed in from score_pill() */
-.score-pill {{
-    border-radius: 14px;
-    padding: 16px;
-    text-align: center;
-    border: 1px solid var(--border);
-    background: var(--bg);
-}}
-.score-pill-num {{
-    font-size: 30px;
-    font-weight: 800;
-    color: #FFFFFF;
-}}
-.score-pill-label {{
-    font-size: 13px;
-    color: var(--fg);
-    margin-top: 2px;
-}}
-
-/* ---------- Stock detail card (single-stock card) ---------- */
-/* Left: code + name + badge | Right: score + progress bar */
-.stock-card {{
-    background: #0F172A; color: #FFFFFF;
-    border: 1px solid {BORDER};
-    border-radius: 16px;
-    padding: 22px 26px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin: 10px 0 16px 0;
-}}
-.stock-code {{ color: #FFFFFF; font-size: 13px; }}
-.stock-name {{ font-size: 22px; font-weight: 700; color: {TEXT}; }}
-.stock-score {{ font-size: 40px; font-weight: 800; color: {TEXT}; line-height: 1; }}
-.stock-score span {{ font-size: 18px; color: {MUTED}; font-weight: 500; }}  /* the " / 9" part */
-/* Rounded 財務強度 badge, colored by strength level */
-.badge {{
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 650;
-    color: var(--fg);
-    background: var(--bg);
-    margin-top: 8px;
-}}
-/* F-Score progress bar: gray track + colored fill */
-.progress {{
-    height: 8px;
-    background: #F1F5F9;
-    border-radius: 999px;
-    overflow: hidden;
-    width: 220px;
-    margin-top: 10px;
-}}
-.progress > div {{
-    height: 100%;
-    background: var(--fg);
-    border-radius: 999px;
-}}
-
-/* ---------- Criteria (the 9 F-Score criteria) ---------- */
-.crit {{
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    background: #0F172A; color: #FFFFFF;
-    border: 1px solid {BORDER};
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
-}}
-/* Small square holding ✓ / ✕ */
-.crit-icon {{
-    flex: 0 0 28px;
-    height: 28px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    color: var(--fg);
-    background: var(--bg);
-}}
-.crit-title {{
-    font-size: 14px;
-    font-weight: 650;
-    color: {TEXT};
-}}
-/* 符合 / 未符合 text next to the criterion name */
-.crit-status {{
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--fg);
-    margin-left: 6px;
-}}
-.crit-desc {{
-    color: {MUTED};
-    font-size: 12px;
-    margin-top: 2px;
-}}
-/* Group heading: 獲利能力 3/4 … */
-.crit-group {{
-    font-size: 12px;
-    font-weight: 700;
-    color: {MUTED};
-    letter-spacing: 0.6px;
-    margin: 14px 0 8px 0;
-}}
-
-/* ---------- Widgets (override Streamlit widget styles) ---------- */
-div.stButton > button {{
-    min-height: 46px;
-    border-radius: 10px;
-    font-weight: 650;
-}}
-/* 開始分析 button (type="primary"): white background, #c23616 border + text */
-div.stButton > button[kind="primary"] {{
-    background-color: #FFFFFF !important;
-    border: 2px solid #c23616 !important;
-    color: #c23616 !important;
-    transition: background-color 0.15s ease;
-}}
-div.stButton > button[kind="primary"] p {{
-    color: #c23616 !important;
-    font-weight: 700;
-}}
-/* Hover → light red background */
-div.stButton > button[kind="primary"]:hover {{
-    background-color: #FDECEA !important;
-    border-color: #c23616 !important;
-}}
-/* Pressed / focused → slightly darker background + soft glow */
-div.stButton > button[kind="primary"]:active,
-div.stButton > button[kind="primary"]:focus {{
-    background-color: #F9D5D0 !important;
-    border-color: #c23616 !important;
-    box-shadow: 0 0 0 3px rgba(194, 54, 22, 0.15) !important;
-}}
-/* Expander box (collapsible section) */
-div[data-testid="stExpander"] {{
-    background: #0F172A; color: #FFFFFF;
-    border: 1px solid {BORDER};
-    border-radius: 12px;
-}}
-/* Expander header: always white background, black text, even on hover / when open
-   (Streamlit's dark theme turns it black, so we force it back) */
-div[data-testid="stExpander"] details,
-div[data-testid="stExpander"] summary,
-div[data-testid="stExpander"] summary:hover,
-div[data-testid="stExpander"] summary:focus,
-div[data-testid="stExpander"] summary:focus-visible,
-div[data-testid="stExpander"] details[open] > summary {{
-    background-color: #FFFFFF !important;
-    color: {TEXT} !important;
-    border-radius: 12px;
-}}
-div[data-testid="stExpander"] summary p,
-div[data-testid="stExpander"] summary span,
-div[data-testid="stExpander"] summary:hover p,
-div[data-testid="stExpander"] summary:hover span {{
-    color: {TEXT} !important;
-    font-weight: 600;
-}}
-/* Expander ▸ arrow */
-div[data-testid="stExpander"] summary svg {{
-    color: {TEXT} !important;
-    fill: {TEXT} !important;
-}}
-/* Hovering the expander header → very light gray background */
-div[data-testid="stExpander"] summary:hover {{
-    background-color: #F1F5F9 !important;
-}}
-/* Select boxes (selectbox/multiselect) and number inputs */
-div[data-baseweb="select"] > div,
-div[data-baseweb="input"] > div {{
-    background: #0F172A; color: #FFFFFF;
-    border-color: #CBD5E1;
-}}
-/* Text inside number inputs (e.g. 10000) — force a dark color so it never fades */
-div[data-baseweb="input"] input,
-[data-testid="stNumberInput"] input {{
-    color: {TEXT} !important;
-    -webkit-text-fill-color: {TEXT} !important;
-    font-weight: 600;
-    opacity: 1 !important;
-}}
-/* Selected value inside a selectbox — dark text.
-   Set on the container (inherited), so the placeholder keeps its own gray color */
-div[data-baseweb="select"] > div {{
-    color: {TEXT};
-}}
-/* Placeholder text (請選擇股票) — gray */
-div[data-baseweb="select"] input::placeholder {{
-    color: #94A3B8 !important;
-    -webkit-text-fill-color: #94A3B8 !important;
-}}
-/* Dropdown arrow */
-div[data-baseweb="select"] svg {{
-    color: {TEXT} !important;
-    fill: {TEXT} !important;
-}}
-/* Dropdown menu (opens in a popover): white background, black text */
-div[data-baseweb="popover"],
-div[data-baseweb="popover"] > div,
-div[data-baseweb="popover"] ul,
-div[data-baseweb="menu"],
-ul[role="listbox"] {{
-    background-color: #FFFFFF !important;
-    border-color: {BORDER} !important;
-}}
-div[data-baseweb="popover"] {{
-    border-radius: 12px !important;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12) !important;
-}}
-div[data-baseweb="popover"] li,
-div[data-baseweb="popover"] li *,
-ul[role="listbox"] li,
-ul[role="listbox"] li * {{
-    background-color: transparent;
-    color: {TEXT} !important;
-}}
-/* Hovered / highlighted option → light gray */
-div[data-baseweb="popover"] li:hover,
-div[data-baseweb="popover"] li[aria-selected="true"],
-ul[role="listbox"] li:hover,
-ul[role="listbox"] li[aria-selected="true"] {{
-    background-color: #F1F5F9 !important;
-}}
-/* st.caption() */
-[data-testid="stCaptionContainer"],
-[data-testid="stCaptionContainer"] p {{
-    color: {MUTED} !important;
-}}
-/* Labels above widgets (選擇股票, 初始投資金額…) */
-[data-testid="stWidgetLabel"] p,
-[data-testid="stSelectbox"] label,
-[data-testid="stMultiSelect"] label,
-[data-testid="stNumberInput"] label {{
-    color: {TEXT} !important;
-    font-weight: 600;
-}}
-/* Dataframe border (the table itself is drawn on a canvas, so CSS can't
-   style its cells; its background follows the theme in .streamlit/config.toml) */
-[data-testid="stDataFrame"] {{
-    border: 1px solid {BORDER};
-    border-radius: 10px;
-}}
-/* Tab buttons */
-button[data-baseweb="tab"] {{
-    font-size: 15px;
-    font-weight: 600;
-}}
-/* Stock tags inside the multiselect (2330 台積電 ×) */
-span[data-baseweb="tag"] {{
-    background-color: #273c75 !important;
-    border-radius: 8px !important;
-}}
-span[data-baseweb="tag"],
-span[data-baseweb="tag"] span,
-span[data-baseweb="tag"] svg {{
-    color: #FFFFFF !important;
-    fill: #FFFFFF !important;
-}}
-/* Unselected tab: black text */
-button[data-baseweb="tab"][aria-selected="false"],
-button[data-baseweb="tab"][aria-selected="false"] p {{
-    color: {TEXT} !important;
-    opacity: 1 !important;
-}}
-/* Selected tab: blue text */
-button[data-baseweb="tab"][aria-selected="true"],
-button[data-baseweb="tab"][aria-selected="true"] p {{
-    color: {PRIMARY} !important;
-}}
-/* Underline of the selected tab */
-div[data-baseweb="tab-highlight"] {{
-    background-color: {PRIMARY} !important;
-}}
-
-/* ---------- Footer ---------- */
-.footer {{
-    text-align: center;
-    color: {SUBTLE};
-    font-size: 12px;
-    margin-top: 48px;
-    padding-top: 20px;
-    border-top: 1px solid {BORDER};
-}}
-</style>
 """,
     unsafe_allow_html=True,
 )
 
 
-# =========================================================
-# UI HELPERS
-# Small functions that build repeated HTML blocks, to avoid copy-paste.
-# =========================================================
 
 def html(content: str):
     """Shorthand for st.markdown(..., unsafe_allow_html=True) to render HTML."""
@@ -563,9 +78,6 @@ def section_header(num: str, title: str, subtitle: str = ""):
         + (f'<div class="section-subtitle">{subtitle}</div>' if subtitle else "")
     )
 
-# Load external CSS
-load_css("style.css")
-
 
 def kpi_card(label: str, value: str, desc: str, accent: str = PRIMARY):
     """
@@ -580,9 +92,6 @@ def kpi_card(label: str, value: str, desc: str, accent: str = PRIMARY):
         f"</div>"
     )
 
-# Load external CSS
-load_css("style.css")
-
 
 def score_pill(count: int, key: str):
     """
@@ -596,9 +105,6 @@ def score_pill(count: int, key: str):
         f'<div class="score-pill-label">{label}</div>'
         f"</div>"
     )
-
-# Load external CSS
-load_css("style.css")
 
 
 def base_layout(fig, height=420, y_prefix=None, y_format=None):
@@ -622,10 +128,7 @@ def base_layout(fig, height=420, y_prefix=None, y_format=None):
             linecolor="#CBD5E1",
             tickfont=dict(color=TEXT, size=13),
             title_font=dict(color=TEXT),
-        )
-
-# Load external CSS
-load_css("style.css"),
+        ),
         yaxis=dict(
             tickfont=dict(color=TEXT, size=13),
             title_font=dict(color=TEXT),
@@ -634,14 +137,8 @@ load_css("style.css"),
             zeroline=False,
             tickprefix=y_prefix,
             tickformat=y_format,
-        )
-
-# Load external CSS
-load_css("style.css"),
+        ),
     )
-
-# Load external CSS
-load_css("style.css")
     return fig
 
 
@@ -690,10 +187,7 @@ CRITERIA_GROUPS = [
             ("Delta_ROA", "資產報酬率改善", "本期 ROA 高於前一期。"),
             ("Accrual", "盈餘品質", "營業現金流相對於資產的表現優於 ROA。"),
         ],
-    )
-
-# Load external CSS
-load_css("style.css"),
+    ),
     (
         "財務結構與流動性",  # Leverage, liquidity and source of funds (3 criteria)
         [
@@ -701,20 +195,14 @@ load_css("style.css"),
             ("Liquidity", "流動性改善", "公司的流動比率較前一期提高。"),
             ("Shares", "未發行新股", "公司普通股股數沒有增加。"),
         ],
-    )
-
-# Load external CSS
-load_css("style.css"),
+    ),
     (
         "營運效率",  # Operating efficiency (2 criteria)
         [
             ("Gross_Margin", "毛利率改善", "本期毛利率高於前一期。"),
             ("Asset_Turnover", "資產週轉率改善", "公司利用資產創造營收的效率提高。"),
         ],
-    )
-
-# Load external CSS
-load_css("style.css"),
+    ),
 ]
 
 
@@ -767,9 +255,6 @@ with st.container(border=True):
         "選擇您想分析的台灣股票，並設定投資金額與配置比例。",
     )
 
-# Load external CSS
-load_css("style.css")
-
     # Wide left column (stock picker), narrow right column (capital) — ratio 2.4 : 1
     config_col1, config_col2 = st.columns([2.4, 1], gap="large")
 
@@ -784,9 +269,6 @@ load_css("style.css")
             placeholder="請選擇股票",   # gray hint shown when no stock is selected
         )
 
-# Load external CSS
-load_css("style.css")
-
     with config_col2:
         # Initial capital (NT$), minimum 1,000, step of 1,000
         initial_investment = st.number_input(
@@ -796,9 +278,6 @@ load_css("style.css")
             step=1000.0,
             format="%.0f",   # show an integer, no .00
         )
-
-# Load external CSS
-load_css("style.css")
 
     # Defaults in case no stock is selected
     weights = {}
@@ -825,9 +304,6 @@ load_css("style.css")
                         key=f"weight_{ticker}",   # unique key so Streamlit remembers each input
                     )
 
-# Load external CSS
-load_css("style.css")
-
             # Show the total weight: green if = 100%, orange otherwise
             total_weight = sum(weights.values())
             w_col1, w_col2 = st.columns([1, 1])
@@ -840,9 +316,6 @@ load_css("style.css")
                     f'<div style="text-align:right;color:{MUTED};font-size:14px;">'
                     f'目前總權重：<b style="color:{color};">{total_weight:.1%}</b></div>'
                 )
-
-# Load external CSS
-load_css("style.css")
 
     # Run button (takes 1/4 of the width).
     # st.button returns True only once, on the rerun right after the click.
@@ -890,9 +363,6 @@ if run_analysis:
                 text=f"正在取得 {STOCK_NAMES[ticker]} 資料……",
             )
 
-# Load external CSS
-load_css("style.css")
-
         progress.empty()   # remove the progress bar when done
 
         if not returns_dict:
@@ -911,9 +381,6 @@ load_css("style.css")
             weight_series = (
                 pd.Series(weights).reindex(returns_df.columns).fillna(0)
             )
-
-# Load external CSS
-load_css("style.css")
 
             # ----- Risk metrics -----
             portfolio_returns = calculate_portfolio_returns(returns_df, weight_series)
@@ -942,9 +409,6 @@ load_css("style.css")
                 f_score_df=f_score_df,
             )
 
-# Load external CSS
-load_css("style.css")
-
             st.toast("分析完成！", icon="✅")   # small notification in the corner
 
 
@@ -961,9 +425,6 @@ if not st.session_state.analysis_done:
         f'<div style="font-size:40px;">📊</div>'
         f"<div>設定完成後，點擊「開始分析」即可查看結果</div></div>"
     )
-
-# Load external CSS
-load_css("style.css")
 
 else:
 
@@ -994,9 +455,6 @@ else:
             "透過歷史資料評估投資組合的波動程度與潛在下跌幅度。",
         )
 
-# Load external CSS
-load_css("style.css")
-
         # ----- 4 KPI cards -----
         k1, k2, k3, k4 = st.columns(4)
         with k1:
@@ -1006,9 +464,6 @@ load_css("style.css")
                 "歷史績效分析的起始金額",
                 MUTED,
             )
-
-# Load external CSS
-load_css("style.css")
         with k2:
             # Bar color: green if profit, red if loss
             kpi_card(
@@ -1017,9 +472,6 @@ load_css("style.css")
                 f"累積報酬 {total_return:+.2%}",   # :+.2% → +12.34% (always signed)
                 SUCCESS if total_return >= 0 else DANGER,
             )
-
-# Load external CSS
-load_css("style.css")
         with k3:
             kpi_card(
                 "年化波動率",
@@ -1027,9 +479,6 @@ load_css("style.css")
                 "衡量投資報酬的波動程度",
                 PRIMARY,
             )
-
-# Load external CSS
-load_css("style.css")
         with k4:
             kpi_card(
                 "最大回撤",
@@ -1037,9 +486,6 @@ load_css("style.css")
                 "歷史高點至低點的最大跌幅",
                 DANGER,
             )
-
-# Load external CSS
-load_css("style.css")
 
         # Explanation of the two risk metrics
         with st.expander("📖 了解風險指標"):
@@ -1050,9 +496,6 @@ load_css("style.css")
 **最大回撤**：衡量投資組合從歷史高點下降至最低點的最大幅度，可了解過去曾經歷的最大下跌程度。
 """
             )
-
-# Load external CSS
-load_css("style.css")
 
         # ---------- Equity curve (portfolio value over time) ----------
         html('<div class="sub-title">歷史投資組合價值</div>')
@@ -1068,13 +511,7 @@ load_css("style.css")
                 fillcolor="rgba(37, 99, 235, 0.08)",
                 hovertemplate="投資組合價值：NT$ %{y:,.0f}<extra></extra>",
             )
-
-# Load external CSS
-load_css("style.css")
         )
-
-# Load external CSS
-load_css("style.css")
         # Dotted horizontal line = initial capital, to eyeball profit/loss
         fig.add_hline(
             y=initial_investment,
@@ -1083,9 +520,6 @@ load_css("style.css")
             annotation_text="初始金額",
             annotation_font_color=MUTED,
         )
-
-# Load external CSS
-load_css("style.css")
         base_layout(fig, height=420, y_prefix="NT$ ")
         # Tighten the y range around the data (otherwise fill="tozeroy" pulls
         # the axis down to 0 and flattens the curve)
@@ -1109,13 +543,7 @@ load_css("style.css")
                     fillcolor="rgba(220, 38, 38, 0.12)",
                     hovertemplate="回撤：%{y:.2%}<extra></extra>",
                 )
-
-# Load external CSS
-load_css("style.css")
             )
-
-# Load external CSS
-load_css("style.css")
             base_layout(dd_fig, height=300, y_format=".0%")   # y axis as percentage
             st.plotly_chart(dd_fig, use_container_width=True)
 
@@ -1135,13 +563,7 @@ load_css("style.css")
                     textfont=dict(color="#FFFFFF", size=13),
                     hovertemplate="%{label}<br>%{percent}<extra></extra>",
                 )
-
-# Load external CSS
-load_css("style.css")
             )
-
-# Load external CSS
-load_css("style.css")
             pie.update_layout(
                 height=300,
                 margin=dict(l=0, r=0, t=0, b=0),
@@ -1155,14 +577,8 @@ load_css("style.css")
                         font=dict(size=18, color=TEXT),
                         showarrow=False,
                     )
-
-# Load external CSS
-load_css("style.css")
                 ],
             )
-
-# Load external CSS
-load_css("style.css")
             st.plotly_chart(pie, use_container_width=True)
 
         # ----- Allocation detail table -----
@@ -1179,9 +595,6 @@ load_css("style.css")
                     ],
                 }
             )
-
-# Load external CSS
-load_css("style.css")
             st.dataframe(
                 composition_df,
                 use_container_width=True,
@@ -1190,16 +603,10 @@ load_css("style.css")
                     # Weight column shown as a 0–100% progress bar
                     "投資權重": st.column_config.ProgressColumn(
                         "投資權重", format="%.1f%%", min_value=0, max_value=100
-                    )
-
-# Load external CSS
-load_css("style.css"),
+                    ),
                     "投入金額 (NT$)": st.column_config.NumberColumn(format="%,.0f"),
                 },
             )
-
-# Load external CSS
-load_css("style.css")
 
     # =====================================================
     # TAB 2 — F-SCORE
@@ -1213,9 +620,6 @@ load_css("style.css")
             "透過 9 項財務指標評估企業的財務狀況與營運改善程度。",
         )
 
-# Load external CSS
-load_css("style.css")
-
         # Explanation of the F-Score and its scale
         with st.expander("什麼是 Piotroski F-Score？"):
             st.markdown(
@@ -1226,9 +630,6 @@ Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法
 **8–9 分：強**　·　**6–7 分：良好**　·　**4–5 分：中等**　·　**0–3 分：弱**
 """
             )
-
-# Load external CSS
-load_css("style.css")
 
         f_score_df = ss.get("f_score_df")   # .get() → None if the key doesn't exist
 
@@ -1273,13 +674,7 @@ load_css("style.css")
                         textfont=dict(color=TEXT, size=13),
                         hovertemplate="%{y}<br>F-Score：%{x} / 9<extra></extra>",
                     )
-
-# Load external CSS
-load_css("style.css")
                 )
-
-# Load external CSS
-load_css("style.css")
                 # Height grows with the number of tickers (46px each), min 260px
                 base_layout(bar, height=max(260, 46 * len(ranked)))
                 bar.update_layout(hovermode="closest")
@@ -1297,23 +692,14 @@ load_css("style.css")
                         "股票代號": table_df["Stock"],
                         "公司": table_df["Stock"].map(
                             lambda x: F_SCORE_NAMES.get(x, x)
-                        )
-
-# Load external CSS
-load_css("style.css"),
+                        ),
                         "F-Score": table_df["F_Score"],
                         # "Strong" → "強" ([0] = Chinese label)
                         "財務強度": table_df["Financial_Strength"].map(
                             lambda s: STRENGTH_STYLE.get(s, (s,))[0]
-                        )
-
-# Load external CSS
-load_css("style.css"),
+                        ),
                     }
                 )
-
-# Load external CSS
-load_css("style.css")
                 st.dataframe(
                     display_df,
                     use_container_width=True,
@@ -1322,15 +708,9 @@ load_css("style.css")
                         # Score column shown as a 0–9 progress bar
                         "F-Score": st.column_config.ProgressColumn(
                             "F-Score", format="%d / 9", min_value=0, max_value=9
-                        )
-
-# Load external CSS
-load_css("style.css"),
+                        ),
                     },
                 )
-
-# Load external CSS
-load_css("style.css")
 
             # ---------- Detail (9 criteria for one ticker) ----------
             html('<div class="sub-title">詳細財務指標</div>')
@@ -1345,9 +725,6 @@ load_css("style.css")
                 placeholder="請選擇股票",
             )
 
-# Load external CSS
-load_css("style.css")
-
             if selected_code is None:
                 # Nothing selected yet → show a hint instead of the detail cards
                 html(
@@ -1355,9 +732,6 @@ load_css("style.css")
                     f'border:1px dashed #CBD5E1;border-radius:12px;background:#FFFFFF;">'
                     f"請從上方選擇一檔股票，查看 9 項財務指標</div>"
                 )
-
-# Load external CSS
-load_css("style.css")
 
             else:
                 # Row for the selected ticker
@@ -1367,9 +741,6 @@ load_css("style.css")
                 label, fg, bg = STRENGTH_STYLE.get(
                     row["Financial_Strength"], (row["Financial_Strength"], MUTED, "#F1F5F9")
                 )
-
-# Load external CSS
-load_css("style.css")
 
                 # Overview card: code, name, strength badge | score, progress bar
                 html(
@@ -1386,9 +757,6 @@ load_css("style.css")
                     f"</div>"
                     f"</div>"
                 )
-
-# Load external CSS
-load_css("style.css")
 
                 # 3 columns, one per criteria group
                 group_cols = st.columns(3, gap="medium")
@@ -1412,9 +780,6 @@ load_css("style.css")
                                 f'<div class="crit-desc">{desc}</div>'
                                 f"</div></div>"
                             )
-
-# Load external CSS
-load_css("style.css")
 
 
 # =========================================================
