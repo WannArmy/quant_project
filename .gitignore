@@ -19,7 +19,7 @@ env/
 .env
 
 # Streamlit
-.streamlit/
+# .streamlit/
 
 # Data exports (generated files)
 data/exports/*.csv
