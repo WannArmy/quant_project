@@ -38,6 +38,18 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+PRIMARY = "#2563EB"
+PRIMARY_SOFT = "#EFF6FF"
+SUCCESS = "#16A34A"
+SUCCESS_SOFT = "#F0FDF4"
+DANGER = "#DC2626"
+DANGER_SOFT = "#FEF2F2"
+WARNING = "#D97706"
+TEXT = "#0F172A"
+MUTED = "#334155"
+SUBTLE = "#475569"
+BORDER = "#E2E8F0"
+
 # ---------------------------------------------------------
 # CUSTOM CSS – copy from Lingen204/twquant
 # ---------------------------------------------------------
