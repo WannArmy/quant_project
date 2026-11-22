@@ -6,4 +6,4 @@ psycopg2-binary
 scipy
 streamlit
 python-dotenv
-plotly==5.23.0
+plotly
