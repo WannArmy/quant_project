@@ -10,10 +10,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from pathlib import Path
-
-# Load environment variables (e.g., database URL) – optional
 from dotenv import load_dotenv
 
+# Load environment variables (e.g., database URL)
 load_dotenv()
 
 # ---------------------------------------------------------------------------
@@ -26,6 +25,7 @@ from src.risk import (
     calculate_annualized_volatility,
     calculate_maximum_drawdown,
 )
+
 from final_analysis import run_f_score_analysis  # returns a DataFrame of F‑Scores
 
 # ---------------------------------------------------------------------------
@@ -38,6 +38,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# ---------------------------------------------------------------------------
+# Theme colours (used throughout the app)
+# ---------------------------------------------------------------------------
 PRIMARY = "#2563EB"
 PRIMARY_SOFT = "#EFF6FF"
 SUCCESS = "#16A34A"
@@ -50,27 +53,27 @@ MUTED = "#334155"
 SUBTLE = "#475569"
 BORDER = "#E2E8F0"
 
-# ---------------------------------------------------------
-# CUSTOM CSS – copy from Lingen204/twquant
-# ---------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Custom CSS – copy from Lingen204/twquant
+# ---------------------------------------------------------------------------
 st.markdown(
     f"""
     <style>
     /* ---------- Base ---------- */
     header[data-testid=\"stHeader\"] {{ display: none; }}
-
+    
     .stApp {{
         background: #F8FAFC;
         color: {TEXT};
     }}
-
+    
     .main .block-container,
     [data-testid=\"stMainBlockContainer\"] {{
         max-width: 1280px;
         padding-top: 1.5rem;
         padding-bottom: 4rem;
     }}
-
+    
     /* ---------- Hero (top banner) ---------- */
     .hero {{
         background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 55%, #3B82F6 100%);
@@ -104,7 +107,7 @@ st.markdown(
         font-size:13px;
     }}
     .hero-step b {{ margin-right:6px; }}
-
+    
     /* ---------- Panel / Section ---------- */
     .panel {{
         background:#FFFFFF;
@@ -112,7 +115,7 @@ st.markdown(
         border-radius:16px;
         padding:6px 4px;
     }}
-
+    
     .section-head {{
         display:flex;
         align-items:center;
@@ -141,7 +144,7 @@ st.markdown(
         color:{TEXT};
         margin:22px 0 10px 0;
     }}
-
+    
     /* ---------- KPI cards ---------- */
     .kpi {{
         background:#FFFFFF;
@@ -168,21 +171,6 @@ st.markdown(
 )
 
 # ---------------------------------------------------------------------------
-# Theme colours (used throughout the app)
-# ---------------------------------------------------------------------------
-PRIMARY = "#2563EB"
-PRIMARY_SOFT = "#EFF6FF"
-SUCCESS = "#16A34A"
-SUCCESS_SOFT = "#F0FDF4"
-DANGER = "#DC2626"
-DANGER_SOFT = "#FEF2F2"
-WARNING = "#D97706"
-TEXT = "#0F172A"
-MUTED = "#334155"
-SUBTLE = "#475569"
-BORDER = "#E2E8F0"
-
-# ---------------------------------------------------------------------------
 # Helper rendering utilities
 # ---------------------------------------------------------------------------
 def html(content: str) -> None:
@@ -197,7 +185,7 @@ def section_header(num: str, title: str, subtitle: str = "") -> None:
         <div class='section-head'>
             <div class='section-num'>{num}</div>
             <div class='section-title'>{title}</div>
-            {f'<div class="section-subtitle">{subtitle}</div>' if subtitle else ''}
+            {f"<div class='section-subtitle'>{subtitle}</div>" if subtitle else ''}
         </div>
         """
     )
@@ -406,8 +394,7 @@ if run_analysis:
             st.stop()
 
         # Build returns DataFrame
-        returns_df = pd.concat(returns_dict, axis=1)
-        returns_df = returns_df.dropna()
+        returns_df = pd.concat(returns_dict, axis=1).dropna()
         weight_series = pd.Series(weights).reindex(returns_df.columns).fillna(0)
 
         # Risk metrics
@@ -418,7 +405,7 @@ if run_analysis:
         # Equity curve
         equity_curve = (1 + portfolio_returns).cumprod() * initial_investment
 
-        # F‑Score analysis (run once)
+        # F‑Score analysis
         with st.spinner("正在進行財務強度分析……"):
             f_score_df = run_f_score_analysis()
 
@@ -454,7 +441,6 @@ else:
     initial_investment = ss.initial_investment
     final_value = float(equity_curve.iloc[-1])
     total_return = final_value / initial_investment - 1
-
     # Tabs for risk and F‑Score
     tab_risk, tab_fscore = st.tabs(["📈 投資組合與風險", "🏦 Piotroski F-Score"])
 
@@ -463,7 +449,7 @@ else:
         # KPI cards
         k1, k2, k3, k4 = st.columns(4)
         with k1:
-            kpi_card("初始投資金額", f"NT$ {initial_investment:,.0f}", "歷史績效分析的起始金額", MUTED)
+            kpi_card("初始投資金額", f"NT$ {ss.initial_investment:,.0f}", "歷史績效分析的起始金額", MUTED)
         with k2:
             kpi_card(
                 "期末價值",
@@ -475,7 +461,6 @@ else:
             kpi_card("年化波動率", f"{ss.annual_volatility:.2%}", "衡量投資報酬的波動程度", PRIMARY)
         with k4:
             kpi_card("最大回撤", f"{ss.maximum_drawdown:.2%}", "歷史高點至低點的最大跌幅", DANGER)
-
         # Equity curve chart
         fig = go.Figure()
         fig.add_trace(
@@ -495,15 +480,12 @@ else:
 
     with tab_fscore:
         section_header("3", "Piotroski F-Score 財務強度分析", "透過 9 項財務指標評估企業的財務狀況與營運改善程度。")
-        # Explanation expander
         with st.expander("什麼是 Piotroski F-Score？"):
             st.markdown(
                 """
-                Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法。
-                分數越高，代表公司在獲利能力、財務狀況與營運效率方面具有較多正向訊號。
-
+                Piotroski F-Score 是一套由 **0 至 9 分** 組成的財務強度評估方法。\
+                分數越高，代表公司在獲利能力、財務狀況與營運效率方面具有較多正向訊號。\
                 **8–9 分：強**　·　**6–7 分：良好**　·　**4–5 分：中等**　·　**0–3 分：弱**
                 """
             )
-        # Show the F‑Score DataFrame (simple display)
         st.dataframe(ss.f_score_df)
