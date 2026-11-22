@@ -38,6 +38,123 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# ---------------------------------------------------------
+# CUSTOM CSS – copy from Lingen204/twquant
+# ---------------------------------------------------------
+st.markdown(
+    f"""
+    <style>
+    /* ---------- Base ---------- */
+    header[data-testid=\"stHeader\"] {{ display: none; }}
+
+    .stApp {{
+        background: #F8FAFC;
+        color: {TEXT};
+    }}
+
+    .main .block-container,
+    [data-testid=\"stMainBlockContainer\"] {{
+        max-width: 1280px;
+        padding-top: 1.5rem;
+        padding-bottom: 4rem;
+    }}
+
+    /* ---------- Hero (top banner) ---------- */
+    .hero {{
+        background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 55%, #3B82F6 100%);
+        border-radius: 20px;
+        padding: 40px 44px;
+        color: #FFFFFF;
+        margin-bottom: 28px;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
+    }}
+    .hero-badge {{
+        display: inline-block;
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        margin-bottom: 14px;
+    }}
+    .hero-title {{ font-size: 40px; font-weight: 800; line-height: 1.2; margin:0 0 8px 0; }}
+    .hero-subtitle {{ font-size: 16px; opacity:0.85; margin-bottom:22px; }}
+    .hero-steps {{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+    }}
+    .hero-step {{
+        background:rgba(255,255,255,0.12);
+        border-radius:10px;
+        padding:8px 14px;
+        font-size:13px;
+    }}
+    .hero-step b {{ margin-right:6px; }}
+
+    /* ---------- Panel / Section ---------- */
+    .panel {{
+        background:#FFFFFF;
+        border:1px solid {BORDER};
+        border-radius:16px;
+        padding:6px 4px;
+    }}
+
+    .section-head {{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        margin:8px 0 4px 0;
+    }}
+    .section-num {{
+        width:32px; height:32px; border-radius:10px;
+        background:{PRIMARY_SOFT};
+        color:{PRIMARY};
+        font-weight:700;
+        display:flex; align-items:center; justify-content:center;
+        font-size:15px;
+    }}
+    .section-title {{
+        font-size:22px; font-weight:700; color:{TEXT};
+    }}
+    .section-subtitle {{
+        color:{MUTED};
+        font-size:14px;
+        margin:0 0 18px 44px;
+    }}
+    .sub-title {{
+        font-size:17px;
+        font-weight:650;
+        color:{TEXT};
+        margin:22px 0 10px 0;
+    }}
+
+    /* ---------- KPI cards ---------- */
+    .kpi {{
+        background:#FFFFFF;
+        border:1px solid {BORDER};
+        border-radius:14px;
+        padding:18px 20px;
+        min-height:120px;
+        position:relative;
+    }}
+    .kpi::before {{
+        content:"";
+        position:absolute;
+        top:0; left:0; bottom:0; width:6px;
+        background:var(--accent, {PRIMARY});
+        border-top-left-radius:14px;
+        border-bottom-left-radius:14px;
+    }}
+    .kpi-label {{ font-size:14px; color:{MUTED}; margin-bottom:4px; }}
+    .kpi-value {{ font-size:28px; font-weight:600; color:{TEXT}; }}
+    .kpi-desc  {{ font-size:12px; color:{MUTED}; margin-top:6px; }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # ---------------------------------------------------------------------------
 # Theme colours (used throughout the app)
 # ---------------------------------------------------------------------------
